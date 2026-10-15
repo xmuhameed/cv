@@ -1,0 +1,31 @@
+# Copy this file to .github/workflows/redeploy-portfolio.yml in github.com/xmuhameed/cv.
+# It asks Vercel to rebuild both portfolio deployments after a CV PDF lands on main.
+name: Redeploy portfolio
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "**.pdf"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Redeploy xmuhameed.com and editor.xmuhameed.com
+        env:
+          VERCEL_DEPLOY_HOOK_MAIN: ${{ secrets.VERCEL_DEPLOY_HOOK_MAIN }}
+          VERCEL_DEPLOY_HOOK_EDITOR: ${{ secrets.VERCEL_DEPLOY_HOOK_EDITOR }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK_MAIN" ] || [ -z "$VERCEL_DEPLOY_HOOK_EDITOR" ]; then
+            echo "Set VERCEL_DEPLOY_HOOK_MAIN and VERCEL_DEPLOY_HOOK_EDITOR on xmuhameed/cv." >&2
+            exit 1
+          fi
+          fail=0
+          curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK_MAIN" || fail=1
+          curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK_EDITOR" || fail=1
+          exit "$fail"
